@@ -69,16 +69,13 @@ export default function MatchingPage({ user }) {
 
   // ----- Render
   if (isTutor) {
-    return <TutorRequests />; // Tutor view theo role
+    return <TutorRequests />; 
   }
 
-  // Student view theo role
   return (
     <>
       <div className="row g-3">
-        {/* LEFT: Auto-match (trên cùng) + Filters (bên dưới) */}
         <div className="col-lg-3 order-2 order-lg-1">
-          {/* Auto-matching block — đưa lên cao */}
           <div className="filter-card mb-3">
             <div className="fw-bold mb-2">
               <i className="bi bi-magic me-1" /> Tự động tìm trợ giảng
