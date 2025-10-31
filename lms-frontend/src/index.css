@@ -334,3 +334,72 @@ input:focus, textarea:focus, select:focus, button:focus,
   width:10px; height:10px; background:#22c55e;
   border-radius:50%; border:2px solid #fff;
 }
+
+/* --- Pending requests sidebar (right) --- */
+.pending-sidebar .req-list{
+  max-height: calc(100vh - 260px); /* để cuộn đẹp khi dài */
+  overflow: auto;
+}
+.req-item{
+  display: grid;
+  grid-template-columns: 44px 1fr auto; /* avatar | thông tin | cột phải */
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 12px;
+}
+.req-item:hover{ background:#f1f5f9; }
+
+.req-avatar{
+  width:44px; height:44px; border-radius:50%; object-fit:cover; display:block;
+}
+.req-meta{ min-width:0; }
+.req-right{
+  display:flex; flex-direction:column; align-items:flex-end; gap:6px; min-width:92px;
+}
+.req-time{ white-space:nowrap; }
+
+/* Icon button đồng bộ */
+.btn-icon{
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  border: 1px solid transparent;
+}
+
+/* Ghost danger: chỉ đỏ khi hover */
+.btn-ghost-danger{
+  background: transparent;
+  color: #ef4444;                /* red-500 */
+}
+.btn-ghost-danger:hover{
+  background: rgba(239,68,68,.08);
+  border-color: rgba(239,68,68,.20);
+}
+
+/* === Modal: luôn nổi cao nhất === */
+.bk-modal__backdrop{
+  position: fixed;        /* đã có rồi, giữ lại */
+  inset: 0;
+  z-index: 20000 !important;   /* tăng mạnh */
+}
+.bk-modal__card{
+  z-index: 20001;              /* chắc chắn nằm trên backdrop và mọi thứ */
+}
+
+.profile-avatar{
+  width:96px; height:96px; border-radius:50%; object-fit:cover;
+  border:3px solid rgba(25,118,210,.18);
+}
+
+.btn-icon{
+  width:28px; height:28px; display:inline-flex; align-items:center; justify-content:center;
+  border-radius:8px; border:1px solid transparent; padding:0;
+}
+.btn-ghost-danger{ background:transparent; color:#ef4444; }
+.btn-ghost-danger:hover{ background:rgba(239,68,68,.08); border-color:rgba(239,68,68,.18); }
+
+.about-preview{ background:#f8fafc; border:1px solid rgba(0,0,0,.06); border-radius:12px; padding:12px; }

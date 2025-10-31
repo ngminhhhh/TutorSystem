@@ -18,8 +18,8 @@ export default function NavTabs() {
             </NavLink>
           </li>
           <li className="nav-item">
-            <NavLink to="/app/meetings" className={cls}>
-              <i className="bi bi-calendar2-week me-1" /> Meeting Management
+            <NavLink to="/app/workspace" className={cls}>
+              <i className="bi bi-kanban me-1" /> Workspace
             </NavLink>
           </li>
         </ul>

@@ -3,6 +3,8 @@ import bkLogo from "../../assets/imgs/logoBK.png";
 import { Link } from "react-router-dom";
 
 export default function TopBar({ user }) {
+  const name = user?.name || user?.username || "Student User";
+  const role = user?.role || "student";
   const avatar =
     user?.avatar ||
     `https://i.pravatar.cc/80?u=${encodeURIComponent(user?.username || user?.name || "bk")}`;
@@ -15,12 +17,18 @@ export default function TopBar({ user }) {
           <div className="bk-title">Trường Đại học Bách Khoa Thành phố Hồ Chí Minh</div>
         </div>
 
-        <Link to="/app/user-management" className="user-card" aria-label="Open User Management">
+        {/* 🔁 Link sang trang Profile Management */}
+        <Link
+          to="/app/profile"
+          className="user-card"
+          aria-label="Open Profile Management"
+          title="Open Profile"
+        >
           <div className="user-card__meta">
-            <div className="user-card__name">{user?.name || user?.username || "Student User"}</div>
-            <div className="user-card__role">{user?.role || "student"}</div>
+            <div className="user-card__name">{name}</div>
+            <div className="user-card__role">{role}</div>
           </div>
-          <img className="user-card__avatar" src={avatar} alt={user?.name || "User"} />
+          <img className="user-card__avatar" src={avatar} alt={`${name} avatar`} />
         </Link>
       </div>
     </header>

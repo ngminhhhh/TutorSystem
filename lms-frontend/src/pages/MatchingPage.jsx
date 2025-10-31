@@ -3,6 +3,7 @@ import StudentSearch from "../components/matching/StudentSearch";
 import StudentFilters from "../components/matching/StudentFilters";
 import TutorCard from "../components/matching/TutorCard";
 import TutorRequests from "../components/matching/TutorRequests";
+import PendingRequestsSidebar from "../components/matching/PendingRequestsSidebar";
 import Modal from "../components/common/Modal";
 
 const seedTutors = [
@@ -17,8 +18,20 @@ const seedTutors = [
     bioLong:"Giải thích trực quan, slides gọn, code sạch." },
 ];
 
+const seedPending = [
+  {
+    id: "r1",
+    tutor: {
+      id: 1,
+      name: "Dat Le",
+      avatar: "https://i.pravatar.cc/80?img=20",
+      specialty: "Machine Learning"
+    },
+    sentAt: "2m"
+  }
+];
+
 export default function MatchingPage({ user }) {
-  // role: student | tutor (map teacher -> tutor)
   const role = String(user?.role || "student").toLowerCase();
   const isTutor = ["tutor", "teacher"].includes(role);
 
@@ -32,6 +45,35 @@ export default function MatchingPage({ user }) {
   const [finding, setFinding] = useState(false);
   const [ok, setOk] = useState({ open:false, text:"" });
 
+  // ---- NEW: Pending connect requests (right sidebar)
+  const [pending, setPending] = useState(seedPending);
+  const pendingIds = new Set(pending.map(r => r.tutor.id));
+
+  const sendRequest = (tutor) => {
+    // tránh trùng
+    if (pendingIds.has(tutor.id)) {
+      setOk({ open:true, text:`Bạn đã gửi yêu cầu cho ${tutor.name}.` });
+      return;
+    }
+    const req = {
+      id: "r_" + Math.random().toString(36).slice(2,8),
+      tutor: {
+        id: tutor.id,
+        name: tutor.name,
+        avatar: tutor.avatar,
+        specialty: tutor.tags?.[0] || tutor.title || "Tutor"
+      },
+      sentAt: "now"
+    };
+    setPending(prev => [req, ...prev]);
+    setOk({ open:true, text:`Đã gửi yêu cầu ghép cặp đến ${tutor.name}.` });
+  };
+
+  const cancelRequest = (reqId) => {
+    setPending(prev => prev.filter(r => r.id !== reqId));
+  };
+
+  // search
   const searchNow = () => {
     if (query.trim())
       setRecent(r => [query, ...r.filter(x => x !== query)].slice(0, 5));
@@ -48,7 +90,6 @@ export default function MatchingPage({ user }) {
     if (criteria.course)    arr = arr.filter(t => t.tags.includes(criteria.course));
     if (criteria.expertise) arr = arr.filter(t => t.tags.includes(criteria.expertise));
     if (criteria.rating)    arr = arr.filter(t => t.rating >= parseInt(criteria.rating[0], 10));
-    // exp/degree/capacity chỉ demo, bạn có thể áp thêm rule khi có data thật
     return arr;
   }, [query, criteria]);
 
@@ -64,17 +105,15 @@ export default function MatchingPage({ user }) {
     }, 900);
   };
 
-  const askMatch = (tutor) =>
-    setOk({ open:true, text:`Đã gửi yêu cầu ghép cặp đến ${tutor.name} (mock).` });
-
-  // ----- Render
   if (isTutor) {
-    return <TutorRequests />; 
+    return <TutorRequests />;
   }
 
+  // ----- Student view layout: Left 3 / Center 6 / Right 3
   return (
     <>
       <div className="row g-3">
+        {/* LEFT */}
         <div className="col-lg-3 order-2 order-lg-1">
           <div className="filter-card mb-3">
             <div className="fw-bold mb-2">
@@ -110,7 +149,6 @@ export default function MatchingPage({ user }) {
             )}
           </div>
 
-          {/* Filters: bị vô hiệu khi có query */}
           <StudentFilters
             disabled={!!query.trim()}
             criteria={criteria}
@@ -123,8 +161,8 @@ export default function MatchingPage({ user }) {
           />
         </div>
 
-        {/* RIGHT: search + results */}
-        <div className="col-lg-9 order-1 order-lg-2">
+        {/* CENTER */}
+        <div className="col-lg-6 order-1 order-lg-2">
           <StudentSearch
             query={query}
             setQuery={setQuery}
@@ -135,11 +173,26 @@ export default function MatchingPage({ user }) {
           />
 
           {filtered.map((t) => (
-            <TutorCard key={t.id} tutor={t} onRequest={askMatch} />
+            <TutorCard
+              key={t.id}
+              tutor={t}
+              onRequest={() => sendRequest(t)}
+              isPending={pendingIds.has(t.id)}   // <-- dùng để disable nút
+            />
           ))}
           {filtered.length === 0 && (
             <div className="post-card text-muted">Không có kết quả phù hợp.</div>
           )}
+        </div>
+
+        {/* RIGHT: pending requests */}
+        <div className="col-lg-3 order-3">
+          <div className="sidebar">
+            <PendingRequestsSidebar
+              requests={pending}
+              onCancel={cancelRequest}
+            />
+          </div>
         </div>
       </div>
 
