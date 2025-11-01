@@ -403,3 +403,59 @@ input:focus, textarea:focus, select:focus, button:focus,
 .btn-ghost-danger:hover{ background:rgba(239,68,68,.08); border-color:rgba(239,68,68,.18); }
 
 .about-preview{ background:#f8fafc; border:1px solid rgba(0,0,0,.06); border-radius:12px; padding:12px; }
+
+/* Workspace subnav */
+.ws-subnav .nav-link {
+  border-bottom: 2px solid transparent;
+  color: #334155;
+  font-weight: 600;
+  padding: 10px 12px;
+  background: transparent;
+}
+.ws-subnav .nav-link.active {
+  color: #0d47a1;
+  border-color: #0d47a1;
+}
+.ws-subnav .nav-link:focus { box-shadow: none; }
+.ws-subnav .nav-link { border-radius: 0; }
+
+/* Meetings list item */
+.meet-item{ padding:12px; border-radius:12px; cursor:pointer; }
+.meet-item.active{ background:#1d4ed8; color:#fff; }           /* item đang chọn */
+.meet-item:not(.active):hover{ background:#f3f4f6; }
+
+.meet-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  min-width:0;                         /* quan trọng để truncate hoạt động */
+}
+
+.meet-title{
+  font-weight:700;
+  line-height:1.2;
+  overflow:hidden;
+  text-overflow:ellipsis;              /* cắt bớt … */
+  white-space:nowrap;
+}
+
+.meet-badge{
+  flex:0 0 auto;                       /* KHÔNG co giãn, không đẩy title */
+  padding:4px 10px;
+  border-radius:999px;
+  font-weight:700;
+  font-size:12px;
+  line-height:1;
+  white-space:nowrap;
+}
+.meet-badge.upcoming{ background:#16a34a; color:#fff; }
+.meet-badge.past{ background:#64748b; color:#fff; }
+
+.meet-meta{ color:#475569; font-size:14px; }
+.meet-item.active .meet-meta{ color:rgba(255,255,255,.9); }
+
+/* Thu gọn badge trên màn hình hẹp để tránh tràn */
+@media (max-width: 480px){
+  .meet-badge{ padding:3px 8px; font-size:11px; }
+}
