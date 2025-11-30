@@ -1,26 +1,108 @@
-import React, { useMemo, useState } from "react";
+// src/pages/ProfilePage.jsx
+import React, { useEffect, useMemo, useState } from "react";
+
+const API_BASE = "http://localhost:4000"; // đổi nếu server dùng port khác
+
+// map từ user (từ backend / App) sang form model
+function toFormModel(user) {
+  if (!user) user = {};
+  return {
+    fullName: user.name || "Student User",
+    role: user.role || "student",
+    studentId: user.studentId || "20123xxx",
+    email: user.email || "student@hcmut.edu.vn",
+    phone: user.phone || "",
+    major: user.major || "Computer Science",
+    year: user.year || "3",
+    location: user.location || "TP.HCM",
+    skills: Array.isArray(user.skills) && user.skills.length
+      ? [...user.skills]
+      : ["Python", "Machine Learning"],
+    avatar:
+      user.avatar ||
+      "https://i.pravatar.cc/160?img=2",
+    about:
+      user.about ||
+      ("Mình là sinh viên năm 3 CS, quan tâm đến ML/Autostore & ITS.\n" +
+        "Thích đồ án thực chiến, code sạch, và tối ưu hiệu năng."),
+  };
+}
+
+// map từ form model về user object gửi backend
+function toServerPayload(user, form) {
+  // giữ lại id, username, các field khác của user
+  const base = user || {};
+  return {
+    ...base,
+    name: form.fullName,
+    role: form.role,
+    studentId: form.studentId,
+    email: form.email,
+    phone: form.phone,
+    major: form.major,
+    year: form.year,
+    location: form.location,
+    skills: form.skills,
+    avatar: form.avatar,
+    about: form.about,
+  };
+}
 
 export default function ProfilePage({ user, onUpdate }) {
-  // seed từ user hiện tại (mock nếu thiếu)
-  const seed = {
-    fullName: user?.name || "Student User",
-    role: user?.role || "student",
-    studentId: "20123xxx",
-    email: user?.email || "student@hcmut.edu.vn",
-    phone: "",
-    major: "Computer Science",
-    year: "3",
-    location: "TP.HCM",
-    skills: ["Python", "Machine Learning"],
-    avatar: user?.avatar || "https://i.pravatar.cc/160?img=2",
-    about:
-      "Mình là sinh viên năm 3 CS, quan tâm đến ML/Autostore & ITS.\n" +
-      "Thích đồ án thực chiến, code sạch, và tối ưu hiệu năng.",
-  };
-
-  const [form, setForm] = useState(seed);
+  // ===== state chính
+  const [original, setOriginal] = useState(() => toFormModel(user));
+  const [form, setForm] = useState(() => toFormModel(user));
   const [preview, setPreview] = useState(false);
-  const dirty = useMemo(() => JSON.stringify(form) !== JSON.stringify(seed), [form]); // so sánh đơn giản
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  // khi user (prop) thay đổi hoặc khi load lại từ backend,
+  // ta sync form theo user
+  useEffect(() => {
+    const syncFromUser = async () => {
+      if (!user?.username) {
+        const model = toFormModel(user);
+        setOriginal(model);
+        setForm(model);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const res = await fetch(
+          `${API_BASE}/api/users/${encodeURIComponent(user.username)}`
+        );
+        if (res.ok) {
+          const full = await res.json();
+          const model = toFormModel(full);
+          setOriginal(model);
+          setForm(model);
+          // sync lại App nếu backend có thêm field mới
+          onUpdate?.(full);
+        } else {
+          // nếu lỗi thì fallback về prop user
+          const model = toFormModel(user);
+          setOriginal(model);
+          setForm(model);
+        }
+      } catch (e) {
+        console.error("Load profile failed:", e);
+        const model = toFormModel(user);
+        setOriginal(model);
+        setForm(model);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    syncFromUser();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.username]); // chỉ phụ thuộc username
+
+  const dirty = useMemo(
+    () => JSON.stringify(form) !== JSON.stringify(original),
+    [form, original]
+  );
 
   const onChange = (k, v) => setForm((s) => ({ ...s, [k]: v }));
 
@@ -42,13 +124,43 @@ export default function ProfilePage({ user, onUpdate }) {
   const removeSkill = (s) =>
     onChange("skills", form.skills.filter((x) => x !== s));
 
-  const save = () => {
-    // mock: cập nhật ra ngoài nếu cần
-    onUpdate?.(form);
-    alert("Đã lưu hồ sơ (mock).");
+  const save = async () => {
+    if (!user?.username) {
+      alert("Không xác định được username, không thể lưu.");
+      return;
+    }
+    try {
+      setSaving(true);
+      const payload = toServerPayload(user, form);
+      const res = await fetch(
+        `${API_BASE}/api/users/${encodeURIComponent(user.username)}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+      if (!res.ok) {
+        throw new Error("Server trả về lỗi khi lưu hồ sơ.");
+      }
+      const updated = await res.json();
+      const model = toFormModel(updated);
+
+      setOriginal(model);
+      setForm(model);
+      // cập nhật state global ở App + localStorage
+      onUpdate?.(updated);
+
+      alert("Đã lưu hồ sơ.");
+    } catch (e) {
+      console.error(e);
+      alert("Lưu hồ sơ thất bại, kiểm tra server hoặc console.");
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const reset = () => setForm(seed);
+  const reset = () => setForm(original);
 
   return (
     <div className="row g-3">
@@ -57,27 +169,37 @@ export default function ProfilePage({ user, onUpdate }) {
         {/* Box 1: Thông tin cá nhân */}
         <div className="post-card mb-3">
           <div className="d-flex justify-content-between align-items-center">
-            <h5 className="mb-0">Thông tin cá nhân</h5>
+            <h5 className="mb-0">
+              Thông tin cá nhân{" "}
+              {loading && (
+                <span className="text-muted small ms-2">
+                  (Đang tải từ server…)
+                </span>
+              )}
+            </h5>
             <div>
               <button
                 className="btn btn-outline-secondary me-2 btn-round"
-                disabled={!dirty}
+                disabled={!dirty || saving}
                 onClick={reset}
               >
                 Huỷ thay đổi
               </button>
               <button
                 className="btn btn-bk btn-round"
-                disabled={!dirty}
+                disabled={!dirty || saving}
                 onClick={save}
               >
-                Lưu
+                {saving ? "Đang lưu…" : "Lưu"}
               </button>
             </div>
           </div>
           <hr />
 
-          <div className="d-flex align-items-center mb-3" style={{ gap: 16 }}>
+          <div
+            className="d-flex align-items-center mb-3"
+            style={{ gap: 16 }}
+          >
             <img className="profile-avatar" src={form.avatar} alt="avatar" />
             <div>
               <div className="fw-bold">{form.fullName}</div>
@@ -144,8 +266,11 @@ export default function ProfilePage({ user, onUpdate }) {
                 value={form.year}
                 onChange={(e) => onChange("year", e.target.value)}
               >
-                <option>1</option><option>2</option>
-                <option>3</option><option>4</option><option>5</option>
+                <option>1</option>
+                <option>2</option>
+                <option>3</option>
+                <option>4</option>
+                <option>5</option>
               </select>
             </div>
             <div className="col-md-3 mb-2">
@@ -162,7 +287,10 @@ export default function ProfilePage({ user, onUpdate }) {
             <label className="form-label">Kỹ năng (tags)</label>
             <div className="d-flex flex-wrap" style={{ gap: 8 }}>
               {form.skills.map((s) => (
-                <span key={s} className="tutor-tag d-inline-flex align-items-center">
+                <span
+                  key={s}
+                  className="tutor-tag d-inline-flex align-items-center"
+                >
                   {s}
                   <button
                     type="button"
@@ -175,9 +303,19 @@ export default function ProfilePage({ user, onUpdate }) {
                 </span>
               ))}
             </div>
-            <form className="d-flex mt-2" onSubmit={addSkill} style={{ gap: 8 }}>
-              <input name="skill" className="form-control" placeholder="Thêm kỹ năng…" />
-              <button className="btn btn-outline-secondary btn-round">Thêm</button>
+            <form
+              className="d-flex mt-2"
+              onSubmit={addSkill}
+              style={{ gap: 8 }}
+            >
+              <input
+                name="skill"
+                className="form-control"
+                placeholder="Thêm kỹ năng…"
+              />
+              <button className="btn btn-outline-secondary btn-round">
+                Thêm
+              </button>
             </form>
           </div>
         </div>
@@ -196,7 +334,10 @@ export default function ProfilePage({ user, onUpdate }) {
                   onChange={(e) => setPreview(e.target.checked)}
                   id="togglePreview"
                 />
-                <label className="form-check-label" htmlFor="togglePreview">
+                <label
+                  className="form-check-label"
+                  htmlFor="togglePreview"
+                >
                   Xem trước
                 </label>
               </div>
@@ -215,18 +356,23 @@ export default function ProfilePage({ user, onUpdate }) {
           ) : (
             <div className="about-preview">
               {form.about.split("\n").map((ln, i) => (
-                <p key={i} className="mb-2">{ln || <>&nbsp;</>}</p>
+                <p key={i} className="mb-2">
+                  {ln || <>&nbsp;</>}
+                </p>
               ))}
             </div>
           )}
         </div>
       </div>
 
-      {/* SIDEBAR (tuỳ chọn xem nhanh) */}
+      {/* SIDEBAR: preview nhanh */}
       <div className="col-lg-4">
         <div className="filter-card">
           <div className="fw-bold mb-2">Bản xem trước công khai</div>
-          <div className="d-flex align-items-center" style={{ gap: 12 }}>
+          <div
+            className="d-flex align-items-center"
+            style={{ gap: 12 }}
+          >
             <img className="profile-avatar" src={form.avatar} alt="" />
             <div>
               <div className="fw-bold">{form.fullName}</div>
@@ -237,11 +383,14 @@ export default function ProfilePage({ user, onUpdate }) {
           </div>
           <div className="mt-2 d-flex flex-wrap" style={{ gap: 6 }}>
             {form.skills.map((s) => (
-              <span key={s} className="tutor-tag">{s}</span>
+              <span key={s} className="tutor-tag">
+                {s}
+              </span>
             ))}
           </div>
           <div className="text-muted small mt-2">
-            {form.about.slice(0, 140)}{form.about.length > 140 ? "…" : ""}
+            {form.about.slice(0, 140)}
+            {form.about.length > 140 ? "…" : ""}
           </div>
         </div>
       </div>

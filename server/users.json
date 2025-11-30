@@ -1,0 +1,58 @@
+[
+  {
+    "id": "u_student",
+    "username": "student",
+    "password": "123456",
+    "name": "Nguyễn Công Minh",
+    "role": "student",
+    "email": "student@hcmut.edu.vn",
+    "studentId": "20123xxx",
+    "major": "Computer Science",
+    "year": "3",
+    "location": "TP.HCM",
+    "skills": [
+      "Python",
+      "Machine Learning"
+    ],
+    "avatar": "https://i.pravatar.cc/160?img=2",
+    "about": "Mình là sinh viên năm 3 CS, quan tâm đến ML/Autostore & ITS.\nThích đồ án thực chiến, code sạch, và tối ưu hiệu năng.",
+    "bio": "Sinh viên Khoa học máy tính năm 3, thích ML và game theory.",
+    "phone": ""
+  },
+  {
+    "id": "u_teacher",
+    "username": "teacher",
+    "password": "123456",
+    "name": "Teacher User",
+    "role": "tutor",
+    "email": "teacher@hcmut.edu.vn",
+    "studentId": "",
+    "major": "Computer Science",
+    "year": "",
+    "location": "TP.HCM",
+    "skills": [
+      "Algorithms",
+      "Data Structures"
+    ],
+    "avatar": "https://i.pravatar.cc/160?img=5",
+    "about": "Trợ giảng thuật toán, thích giải graph + DP."
+  },
+  {
+    "id": "u_admin",
+    "username": "admin",
+    "password": "admin123",
+    "name": "Admin User",
+    "role": "admin",
+    "email": "admin@hcmut.edu.vn",
+    "studentId": "",
+    "major": "",
+    "year": "",
+    "location": "TP.HCM",
+    "skills": [
+      "System",
+      "Management"
+    ],
+    "avatar": "https://i.pravatar.cc/160?img=10",
+    "about": "Quản trị hệ thống LMS mock."
+  }
+]
