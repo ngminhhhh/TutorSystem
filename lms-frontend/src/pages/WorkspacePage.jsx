@@ -1,167 +1,110 @@
-import React, { useMemo, useState } from "react";
+// src/pages/WorkspacePage.jsx
+import React, { useEffect, useMemo, useState } from "react";
 import SpaceSidebar from "../components/workspace/SpaceSidebar";
 import SpaceHeader from "../components/workspace/SpaceHeader";
 import PostComposer from "../components/workspace/PostComposer";
 import PostCard from "../components/workspace/PostCard";
 import FilesPanel from "../components/workspace/FilesPanel";
-
-// sub-tabs & meetings board ở khu trung tâm
 import SpaceSubnav from "../components/workspace/SpaceSubnav";
 import MeetingsBoard from "../components/workspace/MeetingsBoard";
 
-const seedUser = { id: "u2", name: "Student User", role: "student", avatar: "https://i.pravatar.cc/80?img=2" };
-
-const seedSpaces = [
-  {
-    id: "s1",
-    name: "ML – Dat Le",
-    members: [
-      { id: "u1", name: "Dat Le", role: "tutor", avatar: "https://i.pravatar.cc/80?img=20" },
-      { id: "u2", name: "Student User", role: "student", avatar: "https://i.pravatar.cc/80?img=2" },
-      { id: "u3", name: "Khoa Vu", role: "student", avatar: "https://i.pravatar.cc/80?img=12" },
-    ],
-    posts: [
-      {
-        id: "p1",
-        authorId: "u1",
-        content: "Chào lớp, tuần này ôn SGD + Momentum.\nĐọc trước chương 3.",
-        pinned: true,
-        createdAt: "2025-10-31 09:00",
-        attachments: ["slides-week1.pdf"],
-      },
-      { id: "p2", authorId: "u2", content: "Thầy ơi, assignment 1 nộp hạn mấy giờ ạ?", pinned: false, createdAt: "2025-10-31 10:21" },
-    ],
-    files: [
-      { id: "f1", name: "slides-week1.pdf", size: "2.1MB", uploadedBy: "u1", createdAt: "2025-10-30" },
-      { id: "f2", name: "reading-sgd.pdf", size: "1.4MB", uploadedBy: "u1", createdAt: "2025-10-30" },
-    ],
-    // ==== MEETINGS: đa dạng hơn, có cả past/upcoming, có feedback + summary cho past ====
-    meetings: [
-      // Past
-      {
-        id: "m1",
-        title: "Kickoff Sprint 3",
-        date: "2025-10-20",
-        time: "14:00",
-        duration: 45,
-        location: "Room A1-203",
-        link: "",
-        feedback: [
-          { author: "Student User", text: "Mục tiêu rõ ràng, đủ thời lượng.", rating: 5 },
-          { author: "Khoa Vu", text: "Nên dành thêm thời gian Q&A.", rating: 4 },
-        ],
-        summary: "Thống nhất phạm vi bài 1; phân công vai trò; deadline demo 10/27."
-      },
-      {
-        id: "m2",
-        title: "Review Assignment 1",
-        date: "2025-10-27",
-        time: "09:00",
-        duration: 60,
-        location: "Google Meet",
-        link: "https://meet.google.com/mock-ml",
-        feedback: [
-          { author: "Dat Le", text: "Bài làm ổn, chú ý format báo cáo.", rating: 4 },
-        ],
-        summary: "Đã review 4/4 nhóm; còn thiếu phần benchmark."
-      },
-      // Upcoming
-      {
-        id: "m3",
-        title: "Weekly Checkpoint",
-        date: "2025-11-02",
-        time: "09:30",
-        duration: 60,
-        location: "Google Meet",
-        link: "https://meet.google.com/mock-ml",
-        feedback: [],
-        summary: ""
-      },
-      {
-        id: "m4",
-        title: "Consultation – Optimization",
-        date: "2025-11-10",
-        time: "16:00",
-        duration: 30,
-        location: "Online",
-        link: "https://meet.google.com/mock-opt",
-        feedback: [],
-        summary: ""
-      }
-    ],
-  },
-  {
-    id: "s2",
-    name: "Algorithms – Thao Tran",
-    members: [
-      { id: "u4", name: "Thao Tran", role: "tutor", avatar: "https://i.pravatar.cc/80?img=5" },
-      { id: "u2", name: "Student User", role: "student", avatar: "https://i.pravatar.cc/80?img=2" },
-    ],
-    posts: [],
-    files: [],
-    meetings: [
-      {
-        id: "m5",
-        title: "Greedy vs DP Clinic",
-        date: "2025-10-15",
-        time: "10:00",
-        duration: 50,
-        location: "Room C2-104",
-        link: "",
-        feedback: [
-          { author: "Student User", text: "Ví dụ minh họa dễ hiểu.", rating: 5 }
-        ],
-        summary: "So sánh greedy & DP bằng bài coin change; lưu ý counterexamples."
-      },
-      {
-        id: "m6",
-        title: "Graph Practice Set",
-        date: "2025-11-05",
-        time: "13:30",
-        duration: 70,
-        location: "Google Meet",
-        link: "https://meet.google.com/mock-graph",
-        feedback: [],
-        summary: ""
-      }
-    ],
-  },
-];
-
-export default function WorkspacePage({ user = seedUser }) {
-  // Hooks luôn ở top-level
-  const [spaces, setSpaces] = useState(seedSpaces);
-  const [activeId, setActiveId] = useState("s1");
+export default function WorkspacePage({ user }) {
+  const username = user?.username;
+  const [spaces, setSpaces] = useState([]);
+  const [activeId, setActiveId] = useState(null);
   const [tab, setTab] = useState("feed"); // 'feed' | 'meetings'
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const active = useMemo(() => spaces.find((s) => s.id === activeId), [spaces, activeId]);
+  // load workspaces từ backend
+  useEffect(() => {
+    if (!username) return;
+    const load = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const res = await fetch(
+          `http://localhost:4000/api/workspaces?username=${encodeURIComponent(
+            username
+          )}`
+        );
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        const normalized = (data || []).map((ws) => ({
+          posts: [],
+          files: [],
+          meetings: [],
+          ...ws,
+          posts: ws.posts || [],
+          files: ws.files || [],
+          meetings: ws.meetings || []
+        }));
+        setSpaces(normalized);
+        if (!activeId && normalized.length > 0) {
+          setActiveId(normalized[0].id);
+        }
+      } catch (e) {
+        console.error("Load workspaces fail:", e);
+        setError("Không tải được danh sách workspace.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [username, activeId]);
+
+  const active = useMemo(
+    () => spaces.find((s) => s.id === activeId) || spaces[0] || null,
+    [spaces, activeId]
+  );
+
   const isTutor = useMemo(() => {
-    const me = active?.members.find((m) => m.id === user.id) || user;
-    return String(me.role).toLowerCase() === "tutor";
-  }, [active, user]);
+    if (!active) return false;
+    const me =
+      active.members?.find(
+        (m) => m.username === username || m.id === username
+      ) || user;
+    return String(me?.role || "").toLowerCase() === "tutor";
+  }, [active, username, user]);
 
-  if (!active) return <div className="text-muted">No workspace.</div>;
+  if (loading && spaces.length === 0) {
+    return <div className="text-muted small">Đang tải workspace…</div>;
+  }
 
-  // ===== FEED handlers
+  if (error && spaces.length === 0) {
+    return <div className="text-danger small">{error}</div>;
+  }
+
+  if (!active) {
+    return (
+      <div className="post-card text-muted">
+        Bạn chưa có workspace nào. Hãy gửi / chấp nhận yêu cầu trong{" "}
+        <b>Tutor-Student Matching</b>.
+      </div>
+    );
+  }
+
+  // ===== FEED handlers (local-only)
   const addPost = (text, attachments = []) => {
     if (!text.trim()) return;
     setSpaces((prev) =>
       prev.map((s) =>
-        s.id !== activeId
+        s.id !== active.id
           ? s
           : {
               ...s,
               posts: [
                 {
                   id: "p_" + Math.random().toString(36).slice(2, 8),
-                  authorId: user.id,
+                  authorId: username,
                   content: text.trim(),
                   pinned: false,
                   createdAt: new Date().toISOString(),
-                  attachments,
+                  attachments
                 },
-                ...s.posts,
-              ],
+                ...s.posts
+              ]
             }
       )
     );
@@ -171,11 +114,13 @@ export default function WorkspacePage({ user = seedUser }) {
     if (!isTutor) return;
     setSpaces((prev) =>
       prev.map((s) =>
-        s.id !== activeId
+        s.id !== active.id
           ? s
           : {
               ...s,
-              posts: s.posts.map((p) => (p.id === postId ? { ...p, pinned: !p.pinned } : p)),
+              posts: s.posts.map((p) =>
+                p.id === postId ? { ...p, pinned: !p.pinned } : p
+              )
             }
       )
     );
@@ -184,21 +129,18 @@ export default function WorkspacePage({ user = seedUser }) {
   const deletePost = (postId) => {
     setSpaces((prev) =>
       prev.map((s) =>
-        s.id !== activeId
+        s.id !== active.id
           ? s
-          : {
-              ...s,
-              posts: s.posts.filter((p) => p.id !== postId),
-            }
+          : { ...s, posts: s.posts.filter((p) => p.id !== postId) }
       )
     );
   };
 
-  // ===== FILES handlers
+  // FILE handlers
   const uploadFile = (fileName, size = "—") => {
     setSpaces((prev) =>
       prev.map((s) =>
-        s.id !== activeId
+        s.id !== active.id
           ? s
           : {
               ...s,
@@ -207,11 +149,11 @@ export default function WorkspacePage({ user = seedUser }) {
                   id: "f_" + Math.random().toString(36).slice(2, 8),
                   name: fileName,
                   size,
-                  uploadedBy: user.id,
-                  createdAt: new Date().toISOString(),
+                  uploadedBy: username,
+                  createdAt: new Date().toISOString()
                 },
-                ...s.files,
-              ],
+                ...s.files
+              ]
             }
       )
     );
@@ -219,15 +161,19 @@ export default function WorkspacePage({ user = seedUser }) {
 
   const removeFile = (fid) => {
     setSpaces((prev) =>
-      prev.map((s) => (s.id !== activeId ? s : { ...s, files: s.files.filter((f) => f.id !== fid) }))
+      prev.map((s) =>
+        s.id !== active.id
+          ? s
+          : { ...s, files: s.files.filter((f) => f.id !== fid) }
+      )
     );
   };
 
-  // ===== MEETINGS handlers
+  // MEETING handlers (local-only)
   const addMeeting = (payload) => {
     setSpaces((prev) =>
       prev.map((s) =>
-        s.id !== activeId
+        s.id !== active.id
           ? s
           : {
               ...s,
@@ -236,10 +182,10 @@ export default function WorkspacePage({ user = seedUser }) {
                   id: "m_" + Math.random().toString(36).slice(2, 8),
                   feedback: [],
                   summary: "",
-                  ...payload,
+                  ...payload
                 },
-                ...s.meetings,
-              ],
+                ...s.meetings
+              ]
             }
       )
     );
@@ -247,20 +193,32 @@ export default function WorkspacePage({ user = seedUser }) {
 
   const cancelMeeting = (mid) => {
     setSpaces((prev) =>
-      prev.map((s) => (s.id !== activeId ? s : { ...s, meetings: s.meetings.filter((m) => m.id !== mid) }))
+      prev.map((s) =>
+        s.id !== active.id
+          ? s
+          : { ...s, meetings: s.meetings.filter((m) => m.id !== mid) }
+      )
     );
   };
 
   const addFeedback = (mid, { text, rating }) => {
     setSpaces((prev) =>
       prev.map((s) =>
-        s.id !== activeId
+        s.id !== active.id
           ? s
           : {
               ...s,
               meetings: s.meetings.map((m) =>
-                m.id === mid ? { ...m, feedback: [...(m.feedback || []), { author: user.name, text, rating }] } : m
-              ),
+                m.id === mid
+                  ? {
+                      ...m,
+                      feedback: [
+                        ...(m.feedback || []),
+                        { author: user.name, text, rating }
+                      ]
+                    }
+                  : m
+              )
             }
       )
     );
@@ -269,7 +227,7 @@ export default function WorkspacePage({ user = seedUser }) {
   const summarizeMeeting = (mid) => {
     setSpaces((prev) =>
       prev.map((s) =>
-        s.id !== activeId
+        s.id !== active.id
           ? s
           : {
               ...s,
@@ -278,25 +236,29 @@ export default function WorkspacePage({ user = seedUser }) {
                   ? {
                       ...m,
                       summary:
-                        "Tóm tắt (mock): đã thống nhất ôn SGD + Momentum; phân công làm bài 1; tuần sau review kết quả.",
+                        m.summary ||
+                        "Tóm tắt (mock): đã thảo luận nội dung buổi học và giao bài tập."
                     }
                   : m
-              ),
+              )
             }
       )
     );
   };
 
-  // derived feed
-  const pinned = active.posts.filter((p) => p.pinned);
-  const normal = active.posts.filter((p) => !p.pinned);
+  const pinned = (active.posts || []).filter((p) => p.pinned);
+  const normal = (active.posts || []).filter((p) => !p.pinned);
 
   return (
     <div className="row g-3">
-      {/* LEFT: danh sách space */}
+      {/* LEFT: danh sách workspace */}
       <div className="col-lg-3 order-2 order-lg-1">
         <div className="sidebar">
-          <SpaceSidebar spaces={spaces} activeId={activeId} onSelect={setActiveId} />
+          <SpaceSidebar
+            spaces={spaces}
+            activeId={active.id}
+            onSelect={setActiveId}
+          />
         </div>
       </div>
 
@@ -319,7 +281,10 @@ export default function WorkspacePage({ user = seedUser }) {
                   <PostCard
                     key={p.id}
                     post={p}
-                    author={active.members.find((m) => m.id === p.authorId)}
+                    author={active.members.find(
+                      (m) =>
+                        m.username === p.authorId || m.id === p.authorId
+                    )}
                     canPin={isTutor}
                     onPin={() => togglePin(p.id)}
                     onDelete={() => deletePost(p.id)}
@@ -332,20 +297,27 @@ export default function WorkspacePage({ user = seedUser }) {
               <PostCard
                 key={p.id}
                 post={p}
-                author={active.members.find((m) => m.id === p.authorId)}
+                author={active.members.find(
+                  (m) =>
+                    m.username === p.authorId || m.id === p.authorId
+                )}
                 canPin={isTutor}
                 onPin={() => togglePin(p.id)}
                 onDelete={() => deletePost(p.id)}
               />
             ))}
 
-            {active.posts.length === 0 && <div className="post-card text-muted">Chưa có bài viết nào.</div>}
+            {active.posts.length === 0 && (
+              <div className="post-card text-muted">
+                Chưa có bài viết nào.
+              </div>
+            )}
           </>
         )}
 
         {tab === "meetings" && (
           <MeetingsBoard
-            meetings={active.meetings}
+            meetings={active.meetings || []}
             canManage={isTutor}
             onCreate={addMeeting}
             onCancel={cancelMeeting}
@@ -359,8 +331,8 @@ export default function WorkspacePage({ user = seedUser }) {
       <div className="col-lg-3 order-3">
         <div className="sidebar">
           <FilesPanel
-            files={active.files}
-            spaceMembers={active.members}
+            files={active.files || []}
+            spaceMembers={active.members || []}
             canManage={isTutor}
             onUpload={uploadFile}
             onRemove={removeFile}

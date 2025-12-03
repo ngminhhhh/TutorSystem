@@ -1,5 +1,5 @@
 // src/App.js
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import LoginPage from "./pages/LoginPage";
@@ -9,37 +9,51 @@ import MatchingPage from "./pages/MatchingPage";
 import WorkspacePage from "./pages/WorkspacePage";
 import ProfilePage from "./pages/ProfilePage";
 
-const STORAGE_KEY = "lms-current-user";
+const STORAGE_KEY = "lms_user";
 
 export default function App() {
   const [user, setUser] = useState(null);
 
-  // Khi load app, thử lấy user từ localStorage (để F5 không mất login)
+  // Auto login từ localStorage
   useEffect(() => {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
     try {
-      const parsed = JSON.parse(raw);
-      setUser(parsed);
-    } catch {
-      // hỏng format thì bỏ
-      localStorage.removeItem(STORAGE_KEY);
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        setUser(parsed);
+      }
+    } catch (e) {
+      console.error("Failed to read user from storage", e);
     }
   }, []);
 
-  // Khi login thành công từ LoginPage
   const handleLogin = (u) => {
     setUser(u);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(u));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(u));
+    } catch (e) {
+      console.error("Failed to save user to storage", e);
+    }
   };
 
-  // Khi profile cập nhật (từ ProfilePage)
+  const handleLogout = () => {
+    setUser(null);
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (e) {
+      console.error("Failed to clear user from storage", e);
+    }
+  };
+
+  // Update profile từ ProfilePage
   const handleUpdateUser = (patch) => {
     setUser((prev) => {
-      if (!prev) return prev;
-      // ProfilePage có thể truyền full user hoặc chỉ patch, merge cho chắc ăn
       const next = { ...prev, ...patch };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      } catch (e) {
+        console.error("Failed to update user in storage", e);
+      }
       return next;
     });
   };
@@ -48,31 +62,26 @@ export default function App() {
     <BrowserRouter>
       {user ? (
         <Routes>
-          <Route path="/app" element={<AppLayout user={user} />}>
+          <Route
+            path="/app"
+            element={<AppLayout user={user} onLogout={handleLogout} />}
+          >
             <Route index element={<Navigate to="community" replace />} />
-
-            <Route path="community" element={<CommunityPage user={user} />} />
-
+            <Route path="community" element={<CommunityPage />} />
             <Route path="matching" element={<MatchingPage user={user} />} />
-
             <Route path="workspace" element={<WorkspacePage user={user} />} />
-
-            {/* Meetings cũ chuyển hướng sang Workspace */}
+            {/* Meetings cũ điều hướng về Workspace */}
             <Route path="meetings" element={<Navigate to="../workspace" replace />} />
-
-            {/* Profile Management */}
             <Route
               path="profile"
               element={<ProfilePage user={user} onUpdate={handleUpdateUser} />}
             />
           </Route>
 
-          {/* fallback khi đã login */}
           <Route path="*" element={<Navigate to="/app" replace />} />
         </Routes>
       ) : (
         <Routes>
-          {/* Màn login, nhận user từ backend rồi đẩy lên App */}
           <Route path="/" element={<LoginPage onLogin={handleLogin} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

@@ -10,10 +10,7 @@
     "major": "Computer Science",
     "year": "3",
     "location": "TP.HCM",
-    "skills": [
-      "Python",
-      "Machine Learning"
-    ],
+    "skills": ["Python", "Machine Learning"],
     "avatar": "https://i.pravatar.cc/160?img=2",
     "about": "Mình là sinh viên năm 3 CS, quan tâm đến ML/Autostore & ITS.\nThích đồ án thực chiến, code sạch, và tối ưu hiệu năng.",
     "bio": "Sinh viên Khoa học máy tính năm 3, thích ML và game theory.",
@@ -27,15 +24,12 @@
     "role": "tutor",
     "email": "teacher@hcmut.edu.vn",
     "studentId": "",
-    "major": "Computer Science",
+    "major": "Machine Learning",
     "year": "",
     "location": "TP.HCM",
-    "skills": [
-      "Algorithms",
-      "Data Structures"
-    ],
+    "skills": ["Machine Learning", "Optimization", "Deep Learning"],
     "avatar": "https://i.pravatar.cc/160?img=5",
-    "about": "Trợ giảng thuật toán, thích giải graph + DP."
+    "about": "Trợ giảng thuật toán & ML, thích giải graph + DP."
   },
   {
     "id": "u_admin",
@@ -44,15 +38,69 @@
     "name": "Admin User",
     "role": "admin",
     "email": "admin@hcmut.edu.vn",
-    "studentId": "",
     "major": "",
     "year": "",
     "location": "TP.HCM",
-    "skills": [
-      "System",
-      "Management"
-    ],
+    "skills": ["System", "Management"],
     "avatar": "https://i.pravatar.cc/160?img=10",
     "about": "Quản trị hệ thống LMS mock."
+  },
+  {
+    "id": "u_student2",
+    "username": "student2",
+    "password": "123456",
+    "name": "Trần Hữu Long",
+    "role": "student",
+    "email": "student2@hcmut.edu.vn",
+    "studentId": "20124xxx",
+    "major": "Computer Science",
+    "year": "2",
+    "location": "TP.HCM",
+    "skills": ["C++", "Data structures"],
+    "avatar": "https://i.pravatar.cc/160?img=12",
+    "about": "Sinh viên năm 2, thích competitive programming."
+  },
+  {
+    "id": "u_student3",
+    "username": "student3",
+    "password": "123456",
+    "name": "Lê Thảo Nhi",
+    "role": "student",
+    "email": "student3@hcmut.edu.vn",
+    "studentId": "20125xxx",
+    "major": "Data Science",
+    "year": "1",
+    "location": "TP.HCM",
+    "skills": ["Python", "Statistics"],
+    "avatar": "https://i.pravatar.cc/160?img=15",
+    "about": "Tân sinh viên, quan tâm đến AI & phân tích dữ liệu."
+  },
+  {
+    "id": "u_tutor_algo",
+    "username": "t_algo",
+    "password": "123456",
+    "name": "Thảo Trần",
+    "role": "tutor",
+    "email": "thao.tran@hcmut.edu.vn",
+    "major": "Algorithms",
+    "year": "",
+    "location": "TP.HCM",
+    "skills": ["Algorithms", "Data Structures", "Graph"],
+    "avatar": "https://i.pravatar.cc/160?img=5",
+    "about": "Trợ giảng thuật toán, kinh nghiệm coaching đội tuyển."
+  },
+  {
+    "id": "u_tutor_ai",
+    "username": "t_ai",
+    "password": "123456",
+    "name": "Anh Phạm",
+    "role": "tutor",
+    "email": "anh.pham@hcmut.edu.vn",
+    "major": "AI Fundamentals",
+    "year": "",
+    "location": "TP.HCM",
+    "skills": ["AI Fundamentals", "Python", "Probability"],
+    "avatar": "https://i.pravatar.cc/160?img=22",
+    "about": "Tutor môn Nhập môn AI, thích giải thích trực quan."
   }
 ]

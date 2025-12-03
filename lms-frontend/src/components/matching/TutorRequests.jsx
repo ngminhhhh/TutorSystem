@@ -1,96 +1,178 @@
-import React, { useMemo, useState } from "react";
+// src/components/matching/TutorRequests.jsx
+import React, { useEffect, useState } from "react";
 import Modal from "../common/Modal";
 
-export default function TutorRequests() {
-  const [query, setQuery] = useState({ when:"", major:"", course:"" });
-  const [reject, setReject] = useState({ open:false, item:null, reason:"" });
-  const [ok, setOk] = useState({ open:false, text:"" });
+export default function TutorRequests({ user }) {
+  const username = user?.username;
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [toast, setToast] = useState({ open: false, text: "" });
 
-  const items = [
-    { id:1, student:{name:"Lan Pham", avatar:"https://i.pravatar.cc/80?img=48", major:"CS"}, course:"Machine Learning", sent:"2025-10-21 09:12", status:"Đang chờ" },
-    { id:2, student:{name:"Khoa Vu",  avatar:"https://i.pravatar.cc/80?img=12", major:"SE"}, course:"Algorithms",       sent:"2025-10-20 19:05", status:"Đang chờ" },
-  ];
+  useEffect(() => {
+    if (!username) return;
 
-  const filtered = useMemo(()=>{
-    return items.filter(m =>
-      (!query.when || m.sent.startsWith(query.when)) &&
-      (!query.major || m.student.major===query.major) &&
-      (!query.course || m.course===query.course)
-    );
-  }, [items, query]);
+    const load = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const res = await fetch(
+          `http://localhost:4000/api/matching/requests?role=tutor&username=${encodeURIComponent(
+            username
+          )}&status=pending`
+        );
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        setRequests(data);
+      } catch (e) {
+        console.error("Load tutor requests fail:", e);
+        setError("Không tải được danh sách yêu cầu. Thử F5 lại sau.");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const accept = (it) => setOk({ open:true, text:`Bạn đã chấp nhận sinh viên ${it.student.name}. Hệ thống sẽ thông báo cho sinh viên.` });
+    load();
+  }, [username]);
 
-  const rejectSubmit = () => {
-    if (!reject.reason.trim()) return;
-    setReject({ open:false, item:null, reason:"" });
-    setOk({ open:true, text:`Bạn đã từ chối sinh viên ${reject.item.student.name} – Lý do: ${reject.reason}` });
+  const accept = async (req) => {
+    try {
+      const res = await fetch(
+        `http://localhost:4000/api/matching/requests/${req.id}/accept`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" }
+        }
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json(); // { request, workspace }
+      setRequests((prev) => prev.filter((r) => r.id !== req.id));
+      setToast({
+        open: true,
+        text: `Đã chấp nhận ${
+          data.request.student?.name || req.studentUsername
+        }. Student đã được thêm vào workspace của bạn.`
+      });
+    } catch (e) {
+      console.error("Accept request fail:", e);
+      setToast({
+        open: true,
+        text: "Lỗi khi chấp nhận yêu cầu. Thử lại sau."
+      });
+    }
+  };
+
+  const reject = async (req) => {
+    try {
+      const res = await fetch(
+        `http://localhost:4000/api/matching/requests/${req.id}/reject`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" }
+        }
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      await res.json();
+      setRequests((prev) => prev.filter((r) => r.id !== req.id));
+    } catch (e) {
+      console.error("Reject request fail:", e);
+      setToast({
+        open: true,
+        text: "Lỗi khi từ chối yêu cầu."
+      });
+    }
   };
 
   return (
-    <div className="filter-card">
-      <div className="fw-bold mb-2"><i className="bi bi-inboxes me-2"/>Yêu cầu ghép cặp</div>
-      {/* Toolbar filter */}
-      <div className="row g-2 mb-3">
-        <div className="col-md-4">
-          <label className="form-label mb-1">Ngày gửi</label>
-          <input type="date" className="form-control" value={query.when} onChange={e=>setQuery(q=>({...q, when:e.target.value}))}/>
-        </div>
-        <div className="col-md-4">
-          <label className="form-label mb-1">Chuyên ngành</label>
-          <select className="form-select" value={query.major} onChange={e=>setQuery(q=>({...q, major:e.target.value}))}>
-            <option value="">Tất cả</option><option>CS</option><option>SE</option>
-          </select>
-        </div>
-        <div className="col-md-4">
-          <label className="form-label mb-1">Môn cần hỗ trợ</label>
-          <select className="form-select" value={query.course} onChange={e=>setQuery(q=>({...q, course:e.target.value}))}>
-            <option value="">Tất cả</option><option>Machine Learning</option><option>Algorithms</option>
-          </select>
-        </div>
-      </div>
-
-      {/* List */}
-      <div className="row g-2">
-        {filtered.map(it=>(
-          <div className="col-md-6" key={it.id}>
-            <div className="post-card">
-              <div className="d-flex align-items-center" style={{gap:12}}>
-                <img className="post-avatar" src={it.student.avatar} alt={it.student.name}/>
-                <div className="flex-grow-1">
-                  <div className="post-author">{it.student.name}</div>
-                  <div className="text-muted small">{it.student.major} • {it.course}</div>
-                  <div className="text-muted small">Gửi: {it.sent}</div>
-                  <span className="badge tutor-tag mt-1">{it.status}</span>
-                </div>
-              </div>
-              <div className="d-flex justify-content-end mt-2" style={{gap:8}}>
-                <button className="btn btn-outline-secondary" onClick={()=>setOk({open:true, text:`(Mock) Xem hồ sơ chi tiết của ${it.student.name}`})}>
-                  Xem chi tiết
-                </button>
-                <button className="btn btn-bk" onClick={()=>accept(it)}>Chấp nhận</button>
-                <button className="btn btn-outline-danger" onClick={()=>setReject({open:true, item:it, reason:""})}>Từ chối</button>
-              </div>
+    <div className="row g-3">
+      <div className="col-lg-8">
+        <div className="post-card">
+          <h5>Yêu cầu ghép cặp từ sinh viên</h5>
+          <hr />
+          {loading && <div className="text-muted small">Đang tải…</div>}
+          {error && <div className="alert alert-warning small">{error}</div>}
+          {!loading && requests.length === 0 && (
+            <div className="text-muted small">
+              Hiện chưa có yêu cầu nào.
             </div>
-          </div>
-        ))}
+          )}
+          {!loading && requests.length > 0 && (
+            <div className="d-flex flex-column" style={{ gap: 12 }}>
+              {requests.map((req) => (
+                <div
+                  key={req.id}
+                  className="d-flex justify-content-between align-items-center p-2 rounded"
+                  style={{ background: "#f8fafc" }}
+                >
+                  <div
+                    className="d-flex align-items-center"
+                    style={{ gap: 10 }}
+                  >
+                    <img
+                      className="post-avatar"
+                      src={
+                        req.student?.avatar ||
+                        `https://i.pravatar.cc/80?u=${encodeURIComponent(
+                          req.studentUsername
+                        )}`
+                      }
+                      alt={req.student?.name || req.studentUsername}
+                    />
+                    <div>
+                      <div className="fw-semibold">
+                        {req.student?.name || req.studentUsername}
+                      </div>
+                      <div className="text-muted small">
+                        @{req.student?.username || req.studentUsername} •{" "}
+                        {new Date(req.createdAt).toLocaleString("vi-VN")}
+                      </div>
+                      <div className="text-muted small">
+                        Muốn kết nối với bạn để được hỗ trợ học tập.
+                      </div>
+                    </div>
+                  </div>
+                  <div className="d-flex" style={{ gap: 8 }}>
+                    <button
+                      className="btn btn-sm btn-outline-secondary"
+                      onClick={() => reject(req)}
+                    >
+                      Từ chối
+                    </button>
+                    <button
+                      className="btn btn-sm btn-bk"
+                      onClick={() => accept(req)}
+                    >
+                      Chấp nhận
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Modals */}
-      <Modal open={ok.open} title="Thông báo" onClose={()=>setOk({open:false, text:""})}
+      <div className="col-lg-4">
+        <div className="filter-card">
+          <div className="fw-bold mb-2">Ghi chú</div>
+          <p className="small mb-1">
+            • Khi bạn <b>Chấp nhận</b>, sinh viên sẽ được thêm vào workspace mặc
+            định của bạn.
+          </p>
+          <p className="small mb-0">
+            • Bạn có thể mở tab <b>Workspace</b> để xem danh sách thành viên sau
+            khi ghép cặp.
+          </p>
+        </div>
+      </div>
+
+      <Modal
+        open={toast.open}
+        title="Thông báo"
+        onClose={() => setToast({ open: false, text: "" })}
         actions={null}
       >
-        {ok.text}
-      </Modal>
-
-      <Modal open={reject.open} title={`Từ chối – ${reject.item?.student.name || ""}`} onClose={()=>setReject({open:false,item:null,reason:""})}
-        actions={<button className="btn btn-danger" onClick={rejectSubmit}>Xác nhận từ chối</button>}
-      >
-        <label className="form-label">Lý do cụ thể</label>
-        <textarea className="form-control" rows={3}
-          placeholder="Vui lòng nêu rõ lý do từ chối…" value={reject.reason}
-          onChange={(e)=>setReject(r=>({...r, reason:e.target.value}))}
-        />
+        {toast.text}
       </Modal>
     </div>
   );

@@ -1,40 +1,42 @@
+// src/components/matching/PendingRequestsSidebar.jsx
 import React from "react";
 
 export default function PendingRequestsSidebar({ requests, onCancel }) {
   return (
-    <div className="filter-card pending-sidebar">
-      <div className="d-flex justify-content-between align-items-center mb-2">
-        <div className="fw-bold">
-          <i className="bi bi-hourglass-split me-2" />
-          Yêu cầu đã gửi
-        </div>
-        <span className="badge bg-primary rounded-pill">{requests.length}</span>
+    <div className="filter-card">
+      <div className="fw-bold mb-2">
+        <i className="bi bi-hourglass-split me-1" /> Yêu cầu đã gửi
       </div>
-
       {requests.length === 0 ? (
-        <div className="text-muted small">
-          Chưa có yêu cầu nào đang chờ phản hồi.
-        </div>
+        <div className="text-muted small">Bạn chưa gửi yêu cầu nào.</div>
       ) : (
-        <div className="req-list">
+        <div className="d-flex flex-column" style={{ gap: 8 }}>
           {requests.map((r) => (
-            <div key={r.id} className="req-item">
-              <img className="req-avatar" src={r.tutor.avatar} alt={r.tutor.name} />
-              <div className="req-meta">
-                <div className="fw-bold">{r.tutor.name}</div>
-                <div className="text-muted small">{r.tutor.specialty}</div>
+            <div
+              key={r.id}
+              className="d-flex align-items-center justify-content-between p-2 rounded"
+              style={{ background: "#f8fafc" }}
+            >
+              <div className="d-flex align-items-center" style={{ gap: 8 }}>
+                <img
+                  src={r.tutor.avatar}
+                  alt={r.tutor.name}
+                  className="post-avatar"
+                />
+                <div>
+                  <div className="small fw-semibold">{r.tutor.name}</div>
+                  <div className="text-muted small">
+                    {r.tutor.specialty}
+                    {r.sentAt ? ` • ${r.sentAt}` : ""}
+                  </div>
+                </div>
               </div>
-              <div className="req-right">
-                <div className="req-time text-muted small">{r.sentAt}</div>
-                <button
-                  className="btn btn-sm btn-outline-danger"
-                  onClick={() => onCancel(r.id)}
-                  title="Hủy yêu cầu ghép cặp"
-                >
-                  <i className="bi bi-x-circle me-1" />
-                  Hủy
-                </button>
-              </div>
+              <button
+                className="btn btn-sm btn-outline-secondary"
+                onClick={() => onCancel?.(r.id)}
+              >
+                Huỷ
+              </button>
             </div>
           ))}
         </div>

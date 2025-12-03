@@ -1,0 +1,63 @@
+[
+  {
+    "id": "ws_teacher",
+    "tutor": "teacher",
+    "name": "Teacher User – Workspace",
+    "members": [
+      {
+        "id": "teacher",
+        "username": "teacher",
+        "name": "Teacher User",
+        "role": "tutor",
+        "avatar": "https://i.pravatar.cc/160?img=5"
+      },
+      {
+        "id": "student",
+        "username": "student",
+        "name": "Nguyễn Công Minh",
+        "role": "student",
+        "avatar": "https://i.pravatar.cc/160?img=2"
+      }
+    ],
+    "createdAt": "2025-12-03T02:10:33.312Z",
+    "posts": [],
+    "files": [],
+    "meetings": []
+  },
+  {
+    "id": "ws_t_algo",
+    "tutor": "t_algo",
+    "name": "Thảo Trần – Workspace",
+    "members": [
+      {
+        "id": "t_algo",
+        "username": "t_algo",
+        "name": "Thảo Trần",
+        "role": "tutor",
+        "avatar": "https://i.pravatar.cc/160?img=5"
+      }
+    ],
+    "createdAt": "2025-12-03T02:10:33.313Z",
+    "posts": [],
+    "files": [],
+    "meetings": []
+  },
+  {
+    "id": "ws_t_ai",
+    "tutor": "t_ai",
+    "name": "Anh Phạm – Workspace",
+    "members": [
+      {
+        "id": "t_ai",
+        "username": "t_ai",
+        "name": "Anh Phạm",
+        "role": "tutor",
+        "avatar": "https://i.pravatar.cc/160?img=22"
+      }
+    ],
+    "createdAt": "2025-12-03T02:10:33.313Z",
+    "posts": [],
+    "files": [],
+    "meetings": []
+  }
+]
